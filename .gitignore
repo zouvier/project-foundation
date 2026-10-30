@@ -1,0 +1,11 @@
+.venv/
+.cache/
+.pytest_cache/
+__pycache__/
+.artifacts/
+.fixtures/
+.DS_Store
+*.pyc
+.env
+.env.*
+!.env.example

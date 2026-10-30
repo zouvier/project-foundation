@@ -1,0 +1,49 @@
+_min_copier_version: "9.19.1"
+_subdirectory: template
+_answers_file: .copier-answers.yml
+_exclude:
+  - copier.yml
+  - copier.yaml
+  - .git
+  - .svn
+  - .DS_Store
+  - __pycache__
+  - "*.py[co]"
+  - "~*"
+  - "{% if _copier_operation == 'update' %}src/**{% endif %}"
+  - "{% if _copier_operation == 'update' %}tests/**{% endif %}"
+  - "{% if _copier_operation == 'update' %}README.md{% endif %}"
+  - "{% if _copier_operation == 'update' %}docs/architecture.md{% endif %}"
+  - "{% if _copier_operation == 'update' %}docs/decisions/**{% endif %}"
+  - "{% if _copier_operation == 'update' %}.project/tasks/**{% endif %}"
+project_name:
+  type: str
+  help: "Unique lowercase kebab-case project name (2–48 characters)"
+  validator: >-
+    {% set reserved_distribution_names = ['@jridgewell/resolve-uri', '@jridgewell/sourcemap-codec', '@jridgewell/trace-mapping', '@oxc-project/types', '@rolldown/binding-android-arm-eabi', '@rolldown/binding-android-arm64', '@rolldown/binding-darwin-arm64', '@rolldown/binding-darwin-x64', '@rolldown/binding-freebsd-x64', '@rolldown/binding-linux-arm-gnueabihf', '@rolldown/binding-linux-arm64-gnu', '@rolldown/binding-linux-arm64-musl', '@rolldown/binding-linux-ppc64-gnu', '@rolldown/binding-linux-s390x-gnu', '@rolldown/binding-linux-x64-gnu', '@rolldown/binding-linux-x64-musl', '@rolldown/binding-openharmony-arm64', '@rolldown/binding-win32-arm64-msvc', '@rolldown/binding-win32-x64-msvc', '@rolldown/pluginutils', '@types/chai', '@types/deep-eql', '@types/estree', '@types/node', '@types/react', '@types/react-dom', '@vitest/mocker', '@vitest/spy', 'ajv', 'annotated-doc', 'annotated-types', 'anyio', 'assertion-error', 'ast-serialize', 'attr', 'attrs', 'build', 'certifi', 'chai', 'click', 'colorama', 'csstype', 'detect-libc', 'editables', 'es-module-lexer', 'estree-walker', 'expect-type', 'fast-deep-equal', 'fast-uri', 'fastapi', 'fdir', 'fsevents', 'h11', 'hatchling', 'httpcore', 'httpx', 'idna', 'iniconfig', 'json-schema-traverse', 'jsonschema', 'jsonschema-specifications', 'librt', 'lightningcss', 'lightningcss-android-arm64', 'lightningcss-darwin-arm64', 'lightningcss-darwin-x64', 'lightningcss-freebsd-x64', 'lightningcss-linux-arm-gnueabihf', 'lightningcss-linux-arm64-gnu', 'lightningcss-linux-arm64-musl', 'lightningcss-linux-x64-gnu', 'lightningcss-linux-x64-musl', 'lightningcss-win32-arm64-msvc', 'lightningcss-win32-x64-msvc', 'magic-string', 'mypy', 'mypy-extensions', 'nanoid', 'obug', 'opentelemetry', 'opentelemetry-api', 'packaging', 'pathspec', 'picocolors', 'picomatch', 'pluggy', 'postcss', 'pydantic', 'pydantic-core', 'pygments', 'pyproject-hooks', 'pytest', 'react', 'react-dom', 'referencing', 'require-from-string', 'rolldown', 'rpds', 'rpds-py', 'ruff', 'scheduler', 'source-map-js', 'starlette', 'std-env', 'tinybench', 'tinyexec', 'tinyglobby', 'tomlkit', 'trove-classifiers', 'typescript', 'typing-extensions', 'typing-inspection', 'undici-types', 'uvicorn', 'vite', 'vitest', 'why-is-node-running'] %}
+    {% if not (project_name | regex_search('^[a-z][a-z0-9]*(?:-[a-z0-9]+)*\\Z')) or project_name | length < 2 or project_name | length > 48 %}
+    Use 2–48 lowercase letters/digits, separated by single hyphens; start with a letter.
+    {% elif (project_name | regex_replace('[-_.]+', '-') | lower) in reserved_distribution_names %}
+    This name is reserved by a locked dependency distribution or import package; use a distinctive project name.
+    {% elif project_name in ['and', 'as', 'assert', 'async', 'await', 'break', 'class', 'continue', 'def', 'del', 'elif', 'else', 'except', 'finally', 'for', 'from', 'global', 'if', 'import', 'in', 'is', 'lambda', 'nonlocal', 'not', 'or', 'pass', 'raise', 'return', 'try', 'while', 'with', 'yield'] %}
+    Project names must not be Python keywords.
+    {% elif (project_name | replace('-', '_')) in ['abc', 'antigravity', 'argparse', 'array', 'ast', 'asyncio', 'atexit', 'base64', 'bdb', 'binascii', 'bisect', 'build', 'builtins', 'bz2', 'cProfile', 'calendar', 'cmath', 'cmd', 'code', 'codecs', 'codeop', 'collections', 'colorsys', 'compileall', 'concurrent', 'configparser', 'contextlib', 'contextvars', 'copy', 'copyreg', 'csv', 'ctypes', 'curses', 'dataclasses', 'datetime', 'dbm', 'decimal', 'difflib', 'dis', 'doctest', 'email', 'encodings', 'ensurepip', 'enum', 'errno', 'fastapi', 'faulthandler', 'fcntl', 'filecmp', 'fileinput', 'fnmatch', 'fractions', 'ftplib', 'functools', 'gc', 'genericpath', 'getopt', 'getpass', 'gettext', 'glob', 'graphlib', 'grp', 'gzip', 'hashlib', 'hatchling', 'heapq', 'hmac', 'html', 'http', 'httpx', 'idlelib', 'imaplib', 'importlib', 'inspect', 'io', 'ipaddress', 'itertools', 'json', 'jsonschema', 'keyword', 'linecache', 'locale', 'logging', 'lzma', 'mailbox', 'marshal', 'math', 'mimetypes', 'mmap', 'modulefinder', 'msvcrt', 'multiprocessing', 'mypy', 'netrc', 'nt', 'ntpath', 'nturl2path', 'numbers', 'opcode', 'operator', 'optparse', 'os', 'pathlib', 'pdb', 'pickle', 'pickletools', 'pkgutil', 'platform', 'plistlib', 'poplib', 'posix', 'posixpath', 'pprint', 'profile', 'pstats', 'pty', 'pwd', 'py_compile', 'pyclbr', 'pydoc', 'pydoc_data', 'pyexpat', 'pytest', 'queue', 'quopri', 'random', 're', 'readline', 'reprlib', 'resource', 'rlcompleter', 'ruff', 'runpy', 'sched', 'secrets', 'select', 'selectors', 'shelve', 'shlex', 'shutil', 'signal', 'site', 'smtplib', 'socket', 'socketserver', 'sqlite3', 'sre_compile', 'sre_constants', 'sre_parse', 'ssl', 'stat', 'statistics', 'string', 'stringprep', 'struct', 'subprocess', 'symtable', 'sys', 'sysconfig', 'syslog', 'tabnanny', 'tarfile', 'tempfile', 'termios', 'textwrap', 'this', 'threading', 'time', 'timeit', 'tkinter', 'token', 'tokenize', 'tomllib', 'trace', 'traceback', 'tracemalloc', 'tty', 'turtle', 'turtledemo', 'types', 'typing', 'unicodedata', 'unittest', 'urllib', 'uuid', 'uvicorn', 'venv', 'warnings', 'wave', 'weakref', 'webbrowser', 'winreg', 'winsound', 'wsgiref', 'xml', 'xmlrpc', 'zipapp', 'zipfile', 'zipimport', 'zlib', 'zoneinfo'] %}
+    This name is reserved by the pinned Python runtime or service tools; use a distinctive project name.
+    {% endif %}
+profile:
+  type: str
+  help: "One stack per project; changing profile later requires a separate migration"
+  choices:
+    - typescript-web
+    - python-service
+  default: typescript-web
+package_name:
+  type: str
+  default: "{{ project_name | replace('-', '_') }}"
+  when: false
+  validator: >-
+    {% if package_name != project_name | replace('-', '_') %}
+    package_name is derived from project_name and must not be overridden.
+    {% elif package_name in ['False', 'None', 'True', 'and', 'as', 'assert', 'async', 'await', 'break', 'class', 'continue', 'def', 'del', 'elif', 'else', 'except', 'finally', 'for', 'from', 'global', 'if', 'import', 'in', 'is', 'lambda', 'nonlocal', 'not', 'or', 'pass', 'raise', 'return', 'try', 'while', 'with', 'yield'] %}
+    The normalized project name must not be a Python keyword.
+    {% endif %}

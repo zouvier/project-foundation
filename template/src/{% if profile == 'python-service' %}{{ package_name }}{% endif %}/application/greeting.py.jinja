@@ -1,0 +1,5 @@
+from {{ package_name }}.domain.greeting import greeting
+
+
+def greet(name: str) -> str:
+    return greeting(name)

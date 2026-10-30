@@ -1,0 +1,16 @@
+import { describe, expect, it } from "vitest";
+import { greeting } from "../src/domain/greeting";
+
+describe("greeting", () => {
+  it("greets a named person", () => {
+    expect(greeting("Ada")).toBe("Hello, Ada!");
+  });
+
+  it("trims surrounding whitespace", () => {
+    expect(greeting("  Lin  ")).toBe("Hello, Lin!");
+  });
+
+  it.each(["", "  ", "\t\n"])("uses a fallback for blank input %j", (name) => {
+    expect(greeting(name)).toBe("Hello, friend!");
+  });
+});

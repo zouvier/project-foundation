@@ -1,0 +1,46 @@
+# Architecture
+
+Profile: `{{ profile }}`. This is a project-owned starting decision. Change the documented rules and their validator together when the domain needs a different structure.
+
+{% if profile == 'typescript-web' %}
+## Source map and dependency direction
+
+| Path | Responsibility | Allowed source imports |
+| --- | --- | --- |
+| `src/domain/` | Pure domain functions and types | `domain` only; no external package imports |
+| `src/app/` | React UI and presentation behavior | `app`, `domain` |
+| `src/infrastructure/` | Future browser/network/storage adapters | `infrastructure`, `domain` |
+| `src/main.tsx` | Composition root: mounts the UI and wires future adapters | May compose the layers |
+| `src/styles.css` | Application styles | No TypeScript imports |
+| `tests/` | Behavior tests | May exercise the layers |
+
+`App.tsx` calls `domain/greeting.ts`; the greeting function has no React dependency. Infrastructure is initially empty. When adding an adapter, pass its behavior into the UI from `main.tsx` rather than importing infrastructure directly into `app`. External packages are permitted in `app` and `infrastructure`.
+
+`.project/validate.mjs` uses the TypeScript parser and resolver to check imports, re-exports, import types, and literal dynamic imports inside the three layers. Nonliteral dynamic loading, unknown root source files, and unknown source-layer directories fail. For example, `domain` importing React or `app` importing `infrastructure` fails `./project check`. The composition root is deliberately outside those layer restrictions.
+{% else %}
+## Source map and dependency direction
+
+The package name is `{{ package_name }}` under `src/`.
+
+| Path within the package | Responsibility | Allowed project imports |
+| --- | --- | --- |
+| `domain/` | Domain functions and types | `domain` only |
+| `application/` | Use cases that coordinate domain behavior | `application`, `domain` |
+| `adapters/` | HTTP and future external-system adapters | `adapters`, `application`, `domain` |
+| `main.py` | Composition root: creates FastAPI and mounts adapters | May compose the layers |
+| `__init__.py` | Package identity; keep free of framework wiring | Domain-level restrictions |
+
+`adapters/http.py` defines the health and greeting routes. Its greeting route calls `application/greeting.py`, which delegates to `domain/greeting.py`. Domain and application may use Python's standard library but cannot import third-party packages. FastAPI belongs in the HTTP adapter and composition root. `tests/` exercises domain behavior and the HTTP interface.
+
+`.project/validate.py` parses Python imports, including relative imports, and checks these directions. Dynamic module-loading forms covered by the validator and unknown packages/layers fail. For example, `domain` importing FastAPI or `application` importing `adapters` fails `./project check`. `main.py` is deliberately outside those layer restrictions.
+{% endif %}
+
+## Enforcement and limits
+
+`./project check` combines the boundary validator with metadata/task validation, type checks, profile-specific linting, and tests. The import policy catches supported static dependencies. It does not prove domain purity, prevent all possible runtime loading, or restrict operating-system capabilities. Review remains necessary for changes to composition roots, validators, dependencies, and behavior.
+
+No database, deployment target, model provider, or agent runtime is assumed. Record a concrete need in `docs/decisions/` before adding a new architectural component. A task's allowed paths describe scope; they are not a filesystem permission mechanism.
+
+## Ownership
+
+The template seeds `src/`, `tests/`, this file, `README.md`, `docs/decisions/`, and `.project/tasks/` once. Copier excludes them from updates, including files you deleted. Contract tooling, schemas, and stack configuration can receive reviewed template updates; see [upgrading](upgrading.md). Keep this document and the executable boundary policy in agreement when changing the layout.

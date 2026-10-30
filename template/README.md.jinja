@@ -1,0 +1,88 @@
+# {{ project_name }}
+
+{% if profile == 'typescript-web' %}
+A small React + TypeScript web application built with Vite. The starter shows a greeting form; replace it with this project's purpose and acceptance criteria.
+{% else %}
+A small FastAPI service with a `src` package. The starter exposes `/health` and `/greeting/{name}`; replace this description with the service's purpose and acceptance criteria.
+{% endif %}
+
+## Start here
+
+Use macOS or Linux with Git, `/usr/bin/env` supporting `-S`, and Python 3.9+ available as `python3` for the command runner. It starts Python with `-I -B` so inherited Python import/startup settings cannot redirect it. Native Windows is not verified.
+
+{% if profile == 'typescript-web' %}
+Select **Node 24.11.1** and **npm 11.6.2**. `.node-version` records the Node pin. The command runner checks these exact versions. Dependencies are pinned in `package.json` and `package-lock.json`.
+{% else %}
+Select **uv 0.11.8** and have **Python 3.13.5** installed. `.python-version` records the service runtime. The command runner can use an older Python, but the service environment uses the pinned runtime. Bootstrap does not download Python. Dependencies are pinned in `pyproject.toml` and `uv.lock`.
+{% endif %}
+
+From this generated project's directory, create its own Git history:
+
+```sh
+git init
+git add .
+git commit -m "Initialize project from foundation"
+./project doctor
+```
+
+The first `doctor` normally exits nonzero because dependencies have not been installed. It reports the missing prerequisite without changing files. Then run:
+
+```sh
+./project bootstrap
+./project doctor
+./project check
+./project test
+./project build
+./project dev
+```
+
+{% if profile == 'typescript-web' %}
+Open <http://127.0.0.1:5173>. `Ctrl-C` stops the server. Use `PORT=5174 ./project dev` for another local port; an occupied port fails instead of silently switching. The build is written to `dist/`.
+
+To inspect the **built output**, first run `./project build`, then run this separate foreground preview server:
+
+```sh
+node node_modules/vite/bin/vite.js preview --host 127.0.0.1 --port 4173 --strictPort
+```
+
+Open <http://127.0.0.1:4173> and stop it with `Ctrl-C`. Preview serves the existing `dist/`; rebuild after changes. `./project dev` serves development source and is a different check.
+{% else %}
+Open <http://127.0.0.1:8000/health> for the health response or <http://127.0.0.1:8000/docs> for the API explorer. `Ctrl-C` stops the server. Use `PORT=8001 ./project dev` for another local port. Restart the service after source changes. The build writes a wheel and source distribution to `dist/`.
+{% endif %}
+
+## One command contract
+
+| Command | Meaning |
+| --- | --- |
+| `./project doctor` | Read-only contract/prerequisite and dependency-fingerprint inspection; nonzero means setup needs attention. |
+| `./project bootstrap` | Explicit installation/network step; installs the locked project dependencies. Rerun after deliberate manifest or lockfile changes. |
+| `./project dev` | Runs a cancellable server on `127.0.0.1`; `PORT` accepts integers from 1024 to 65535. |
+| `./project check` | Runs contract/schema, import-boundary, type/profile lint, and test checks; detects changes made during the command to tracked and untracked project inputs. Existing uncommitted work is allowed. No implicit install or source fix. |
+| `./project test` | Runs native discovery once, without watch mode; requires at least one actual passing test in a fresh native report. Empty/all-skipped runs fail. |
+| `./project build` | Builds local artifacts. It does not run the entire acceptance check, publish, or deploy. |
+
+{% if profile == 'typescript-web' %}
+Bootstrap uses `npm ci --include=dev --include=optional --ignore-scripts`, then verifies the installed tools before recording readiness. It normalizes inherited production-only install options. If a future dependency requires an install script, review and record the bootstrap policy change explicitly. `check` runs the contract validator, TypeScript, and Vitest; `build` runs TypeScript and Vite.
+{% else %}
+Bootstrap uses `uv sync --locked` into `.venv`: first install locked dependencies/build tools without the project, then build the editable project with `--no-build-isolation`. This avoids a second unpinned build environment. `check` validates lock freshness offline, schemas, import boundaries, Ruff, mypy, and pytest. `build` uses `.venv/bin/python -m build --no-isolation` with the installed build tools.
+
+Canonical commands select this repository explicitly for uv, normalize Python/uv project and install overrides, and use isolated Python processes. Before recording readiness, and on every later command, they require the root distribution to be editable from this repository and its import origin to be this `src` package. A stale wheel, missing root package or installation from another checkout fails with an explicit bootstrap instruction. `check` and `test` never repair the environment.
+
+Pytest additionally verifies collected test files/callables are under this repository's `tests/` and loaded application modules resolve within its `src` package, including after pytest configuration and test execution. Local pytest path configuration that redirects imports fails. Fresh bytecode-cache prefixes with writes disabled keep old timestamp caches from masking source edits. Native test naming/discovery remains available; importing test callables from outside `tests/` is unsupported by this acceptance contract. These consistency checks do not attest to arbitrary test or plugin honesty. See [environment customization](docs/upgrading.md#python-environment-contract) before changing this layout.
+{% endif %}
+
+`check` is the same command locally and in CI. Its before/after input snapshot includes untracked files and detects additions, deletions, mode and Git index changes. Known root outputs/dependency directories and `.project/cache` are excluded; similarly named nested source directories are included. Write test-generated artifacts under `.project/cache`. The guard detects changes; it does not roll them back or provide a sandbox.
+
+Canonical `check` and `test` ignore inherited `PYTEST_*`/`VITEST_*` filtering options and pytest `addopts`, and use a fresh native JSON/JUnit report. Normal discovery settings and native names such as `*.spec.ts` and `*_test.py` still work. Run the native test tool directly for exploratory collection or filtering; that is not the canonical acceptance command. A test report remains evidence from project code, not a signed proof.
+
+`.project/template.json` is the generated provenance/runtime receipt. The command cross-checks it against project metadata, manifests, runtime pin files and the Copier lineage file. Application versions are independent of the foundation version. For intentional dependency/runtime changes, follow [the customization and upgrade guide](docs/upgrading.md).
+
+## Make the first change
+
+Read [the architecture](docs/architecture.md). Replace the planned example in `.project/tasks/001-first-change.json` with a bounded task: goal, allowed paths, acceptance checks, and the actual `git rev-parse HEAD` base commit. Keep results empty until commands run. Record exit statuses and evidence, list unrun checks and blockers, and leave a concrete next action for a handoff.
+
+Use `AGENTS.md` as the agent entry point. Optional role descriptions in `.project/roles/` reference the same task record. They do not grant permissions or isolate files, credentials, or network access.
+
+Open the folder with `code .`. In VS Code, **Terminal → Run Task** exposes `project: doctor`, `bootstrap`, `dev`, `check`, `test`, and `build`; each invokes the same command above. No task installs dependencies automatically when the folder opens.
+
+This README, domain source, tests, architecture, decisions, and task records are project-owned seeds. Keep them accurate as the project evolves. See [upgrading](docs/upgrading.md) for the managed tooling and Copier lineage rules.

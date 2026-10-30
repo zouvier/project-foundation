@@ -1,0 +1,120 @@
+"""Validate contracts and static imports. These checks are not a sandbox."""
+
+import ast
+import json
+import sys
+from pathlib import Path
+
+from jsonschema import Draft7Validator
+from jsonschema.exceptions import SchemaError
+
+ROOT = Path.cwd()
+ERRORS: list[str] = []
+MISSING = object()
+
+
+def read_json(path: Path) -> object:
+    try:
+        return json.loads(path.read_text())
+    except (OSError, ValueError) as error:
+        ERRORS.append(f"{path.relative_to(ROOT)}: {error}")
+        return MISSING
+
+
+def validate(schema_name: str, files: list[Path]) -> None:
+    schema = read_json(ROOT / ".project/schemas" / schema_name)
+    if schema is MISSING:
+        return
+    try:
+        Draft7Validator.check_schema(schema)
+        validator = Draft7Validator(schema)
+    except SchemaError as error:
+        ERRORS.append(f"{schema_name}: {error.message}")
+        return
+    for path in files:
+        value = read_json(path)
+        if value is MISSING:
+            continue
+        for error in validator.iter_errors(value):
+            location = "/".join(str(part) for part in error.absolute_path)
+            ERRORS.append(f"{path.relative_to(ROOT)}/{location}: {error.message}")
+
+
+validate("project.schema.json", [ROOT / ".project/project.json"])
+tasks = ROOT / ".project/tasks"
+if not tasks.is_dir():
+    ERRORS.append(".project/tasks is missing")
+else:
+    validate("task.schema.json", sorted(tasks.glob("*.json")))
+metadata = read_json(ROOT / ".project/project.json")
+package = metadata.get("package_name") if isinstance(metadata, dict) else None
+allowed = {
+    "domain": {"domain"},
+    "application": {"domain", "application"},
+    "adapters": {"domain", "application", "adapters"},
+}
+
+
+def check_import(path: Path, layer: str, module: str) -> None:
+    parts = module.split(".")
+    if parts[0] == package:
+        if len(parts) < 2 or parts[1] not in allowed[layer]:
+            ERRORS.append(f"{path.relative_to(ROOT)}: {layer} cannot import {module}")
+    elif parts[0] == "importlib":
+        ERRORS.append(f"{path.relative_to(ROOT)}: dynamic module loading is outside the layer policy")
+    elif layer != "adapters" and parts[0] not in sys.stdlib_module_names:
+        ERRORS.append(f"{path.relative_to(ROOT)}: {layer} cannot import external module {module}")
+
+
+if not isinstance(package, str) or not package.isidentifier():
+    ERRORS.append(".project/project.json: package_name must be a Python identifier")
+else:
+    src = ROOT / "src" / package
+    if not src.is_dir():
+        ERRORS.append(f"src/{package} is missing")
+    else:
+        for entry in (ROOT / "src").iterdir():
+            if entry.name != package:
+                ERRORS.append(f"src/{entry.name}: unknown package or source file")
+        for entry in src.iterdir():
+            if entry.is_dir() and entry.name not in {*allowed, "__pycache__"}:
+                ERRORS.append(f"{entry.relative_to(ROOT)}: unknown source layer")
+            if entry.is_file() and entry.name not in {"__init__.py", "main.py"}:
+                ERRORS.append(f"{entry.relative_to(ROOT)}: unknown root source file")
+        for path in sorted(src.rglob("*.py")):
+            try:
+                tree = ast.parse(path.read_text(), filename=str(path))
+            except (OSError, SyntaxError) as error:
+                ERRORS.append(f"{path.relative_to(ROOT)}: {error}")
+                continue
+            relative = path.relative_to(src)
+            layer = relative.parts[0] if len(relative.parts) > 1 else "domain"
+            # main.py is the composition root. Package __init__ stays pure.
+            if relative == Path("main.py") or layer not in allowed:
+                continue
+            module_parts = [package, *relative.with_suffix("").parts]
+            parent_parts = module_parts[:-1]
+            for node in ast.walk(tree):
+                if isinstance(node, ast.Import):
+                    for alias in node.names:
+                        check_import(path, layer, alias.name)
+                elif isinstance(node, ast.ImportFrom):
+                    base = node.module.split(".") if node.module else []
+                    if node.level:
+                        keep = len(parent_parts) - node.level + 1
+                        if keep < 1:
+                            ERRORS.append(f"{path.relative_to(ROOT)}: relative import escapes package")
+                            continue
+                        base = parent_parts[:keep] + base
+                    for alias in node.names:
+                        target = base + ([] if alias.name == "*" else [alias.name])
+                        check_import(path, layer, ".".join(target))
+                elif (isinstance(node, ast.Name) and node.id == "__import__") or (
+                    isinstance(node, ast.Attribute) and node.attr in {"import_module", "__import__"}
+                ):
+                    ERRORS.append(f"{path.relative_to(ROOT)}: dynamic module loading is outside the layer policy")
+
+if ERRORS:
+    print("\n".join(ERRORS), file=sys.stderr)
+    sys.exit(1)
+print("Schemas and source boundaries passed.")

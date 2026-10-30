@@ -1,0 +1,15 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Project contract",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["$schema", "contract_version", "foundation_version", "name", "package_name", "profile"],
+  "properties": {
+    "$schema": {"const": "./schemas/project.schema.json"},
+    "contract_version": {"const": 1},
+    "foundation_version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+    "name": {"type": "string", "minLength": 2, "maxLength": 48, "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$"},
+    "package_name": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"},
+    "profile": {"enum": ["typescript-web", "python-service"]}
+  }
+}

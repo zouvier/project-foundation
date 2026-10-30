@@ -1,0 +1,15 @@
+from fastapi import APIRouter
+
+from {{ package_name }}.application.greeting import greet
+
+router = APIRouter()
+
+
+@router.get("/health")
+def health() -> dict[str, str]:
+    return {"status": "ok"}
+
+
+@router.get("/greeting/{name}")
+def greeting(name: str) -> dict[str, str]:
+    return {"message": greet(name)}

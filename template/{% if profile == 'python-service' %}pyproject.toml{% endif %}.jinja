@@ -1,0 +1,45 @@
+[project]
+name = "{{ project_name }}"
+version = "0.1.0"
+description = "A small service with explicit project conventions."
+requires-python = ">=3.11,<3.14"
+dependencies = [
+  "fastapi==0.162.0",
+  "uvicorn==0.54.0",
+]
+
+[dependency-groups]
+dev = [
+  "build==1.6.1",
+  "editables==0.6",
+  "hatchling==1.33.0",
+  "httpx==0.28.1",
+  "jsonschema==4.26.0",
+  "mypy==2.4.1",
+  "pytest==9.2.0",
+  "ruff==0.17.3",
+]
+
+[build-system]
+requires = ["hatchling==1.33.0"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/{{ package_name }}"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "--strict-markers --strict-config"
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+files = ["src", "tests"]
+cache_dir = ".project/cache/mypy"

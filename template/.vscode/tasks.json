@@ -1,0 +1,11 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {"label": "project: doctor", "type": "process", "command": "${workspaceFolder}/project", "args": ["doctor"], "problemMatcher": []},
+    {"label": "project: bootstrap", "type": "process", "command": "${workspaceFolder}/project", "args": ["bootstrap"], "problemMatcher": []},
+    {"label": "project: dev", "type": "process", "command": "${workspaceFolder}/project", "args": ["dev"], "problemMatcher": []},
+    {"label": "project: check", "type": "process", "command": "${workspaceFolder}/project", "args": ["check"], "problemMatcher": [], "group": {"kind": "test", "isDefault": true}},
+    {"label": "project: test", "type": "process", "command": "${workspaceFolder}/project", "args": ["test"], "problemMatcher": []},
+    {"label": "project: build", "type": "process", "command": "${workspaceFolder}/project", "args": ["build"], "problemMatcher": [], "group": {"kind": "build", "isDefault": true}}
+  ]
+}

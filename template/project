@@ -1,0 +1,176 @@
+#!/usr/bin/env -S python3 -I -B
+"""One explicit command contract for every generated project (Python 3.9+ runner)."""
+import hashlib
+import json
+import os
+from pathlib import Path
+import re
+import shutil
+import subprocess
+import sys
+
+ROOT = Path(__file__).resolve().parent
+os.chdir(ROOT)
+sys.dont_write_bytecode = True
+# -B disables writes, but still reads old timestamp caches. Use a fresh,
+# nonexistent prefix without creating a directory or changing existing caches.
+sys.pycache_prefix = str(ROOT / ".project/cache" / ("source-" + os.urandom(16).hex()))
+sys.path.insert(0, str(ROOT / ".project"))
+from preflight import inspect_contract, project_files  # noqa: E402
+from identity import inspect_identity  # noqa: E402
+from test_runner import run_tests  # noqa: E402
+from command_environment import command_environment  # noqa: E402
+
+ACTIONS = {"doctor", "bootstrap", "dev", "check", "test", "build"}
+STATE = ROOT / ".project/local-state.json"
+
+
+def run(args, **kwargs):
+    print("+ " + " ".join(str(a) for a in args), flush=True)
+    return subprocess.run([str(a) for a in args], check=True, **kwargs)
+
+
+def python_args(*args):
+    return [str(ROOT / ".venv/bin/python"), "-I", "-B", "-X",
+            f"pycache_prefix={sys.pycache_prefix}", *args]
+
+
+def version(binary, expected):
+    if not shutil.which(binary):
+        raise ValueError(f"Missing {binary}; install the version in README.md first.")
+    actual = subprocess.check_output([binary, "--version"], text=True).strip()
+    if expected not in actual.split() and actual != "v" + expected:
+        raise ValueError(f"Expected {binary} {expected}; found {actual}.")
+
+
+def fingerprint(profile):
+    files = ["package.json", "package-lock.json", ".node-version"] if profile == "typescript-web" else [
+        "pyproject.toml", "uv.lock", ".python-version"
+    ]
+    return {name: hashlib.sha256((ROOT / name).read_bytes()).hexdigest() for name in files}
+
+
+def verify_installation(profile, env, runtime):
+    expected = ["node_modules/.bin/tsc", "node_modules/.bin/vite", "node_modules/.bin/vitest"]
+    if profile == "python-service":
+        expected = [".venv/bin/python", ".venv/bin/ruff", ".venv/bin/mypy", ".venv/bin/uvicorn"]
+    if not all((ROOT / name).is_file() for name in expected):
+        raise ValueError("Dependency executables missing. Run ./project bootstrap.")
+    if profile == "typescript-web":
+        commands = [["node", f"node_modules/{entry}", "--version"] for entry in
+                    ["typescript/bin/tsc", "vite/bin/vite.js", "vitest/vitest.mjs"]]
+        commands.append(["node", "--input-type=module", "-e",
+                         "await Promise.all(['react', 'react-dom', 'ajv'].map(x => import(x)))"])
+    else:
+        version(str(ROOT / ".venv/bin/python"), runtime["python"])
+        commands = [python_args("-c", "import fastapi, uvicorn, pytest, mypy, jsonschema, build, hatchling, editables"),
+                    [str(ROOT / ".venv/bin/ruff"), "--version"],
+                    python_args(str(ROOT / ".project/python_environment.py"), "verify")]
+    for args in commands:
+        subprocess.run(args, check=True, env=env, stdout=subprocess.PIPE)
+
+
+def dependencies(profile, env, runtime):
+    if not STATE.is_file() or json.loads(STATE.read_text()) != fingerprint(profile):
+        raise ValueError("Dependencies missing or manifests changed. Run ./project bootstrap.")
+    verify_installation(profile, env, runtime)
+
+
+def input_snapshot():
+    top = subprocess.check_output(["git", "rev-parse", "--show-toplevel"], text=True).strip()
+    if Path(top).resolve() != ROOT:
+        raise ValueError("Initialize this project as its own Git repository before checking it.")
+    files = {}
+    for path in project_files(ROOT):
+        name = path.relative_to(ROOT).as_posix()
+        if path.is_symlink():
+            files[name] = ("symlink", os.readlink(path))
+        elif path.is_file():
+            files[name] = (hashlib.sha256(path.read_bytes()).hexdigest(), path.stat().st_mode & 0o777)
+        else:
+            files[name] = None
+    return {
+        "index": subprocess.check_output(["git", "ls-files", "--stage", "-z"]),
+        "files": files,
+    }
+
+
+def main():
+    if len(sys.argv) != 2 or sys.argv[1] not in ACTIONS:
+        print("Usage: ./project doctor|bootstrap|dev|check|test|build", file=sys.stderr)
+        return 2
+    action = sys.argv[1]
+    metadata = inspect_contract(ROOT)
+    runtime = inspect_identity(ROOT, metadata)
+    profile = metadata["profile"]
+    env = command_environment(ROOT, os.environ)
+    # This changes only the command process environment, never shell/user settings.
+    os.environ.clear()
+    os.environ.update(env)
+    if profile == "typescript-web":
+        version("node", runtime["node"])
+        version("npm", runtime["npm"])
+    else:
+        version("uv", runtime["uv"])
+    if action == "bootstrap":
+        STATE.unlink(missing_ok=True)
+        if profile == "typescript-web":
+            env["NODE_ENV"] = "development"
+            run(["npm", "ci", "--include=dev", "--include=optional", "--ignore-scripts",
+                 "--no-audit", "--no-fund"], env=env)
+        else:
+            # Install locked build tools first so the editable build cannot resolve
+            # a second, unpinned set of build dependencies in an isolated env.
+            uv = ["uv", "--project", ROOT, "--directory", ROOT]
+            run([*uv, "sync", "--locked", "--no-install-project", "--python", runtime["python"]])
+            run([*uv, "sync", "--locked", "--no-build-isolation", "--python", runtime["python"]])
+        verify_installation(profile, env, runtime)
+        STATE.write_text(json.dumps(fingerprint(profile), indent=2) + "\n")
+        print("Bootstrap complete. Dependencies are project-local.")
+        return 0
+    dependencies(profile, env, runtime)
+    if action == "doctor":
+        print(f"Ready: {metadata['name']} ({profile}); contract and installed dependency fingerprints match.")
+        return 0
+    if action == "dev":
+        port = os.environ.get("PORT", "5173" if profile == "typescript-web" else "8000")
+        if not re.fullmatch(r"[0-9]{1,5}", port) or not 1024 <= int(port) <= 65535:
+            raise ValueError("PORT must be an integer from 1024 to 65535.")
+        args = ["node", "node_modules/vite/bin/vite.js", "--host", "127.0.0.1", "--port", port, "--strictPort"]
+        if profile == "python-service":
+            args = python_args("-m", "uvicorn", metadata["package_name"] + ".main:app",
+                               "--host", "127.0.0.1", "--port", port)
+        print(f"Dev: http://127.0.0.1:{port} (Ctrl-C to stop)", flush=True)
+        os.execvpe(args[0], args, env)
+    if action == "test":
+        run_tests(ROOT, profile, env)
+    elif action == "build":
+        run(["npm", "run", "build"] if profile == "typescript-web" else
+            python_args("-m", "build", "--no-isolation"))
+    elif action == "check":
+        before = input_snapshot()
+        try:
+            if profile == "typescript-web":
+                run(["node", ".project/validate.mjs"])
+                run(["npm", "run", "typecheck"])
+            else:
+                run(["uv", "--project", ROOT, "--directory", ROOT, "lock", "--check", "--offline",
+                     "--python", ROOT / ".venv/bin/python"])
+                run(python_args(".project/validate.py"))
+                run([".venv/bin/ruff", "check", "--no-cache", "src", "tests"])
+                run([".venv/bin/mypy"])
+            run_tests(ROOT, profile, env)
+        finally:
+            if before != input_snapshot():
+                raise ValueError("Check changed tracked or untracked project inputs; inspect the working tree before proceeding.")
+    return 0
+
+
+if __name__ == "__main__":
+    try:
+        sys.exit(main())
+    except (ValueError, OSError, KeyError, json.JSONDecodeError) as exc:
+        print(f"project: {exc}", file=sys.stderr)
+        sys.exit(1)
+    except subprocess.CalledProcessError as exc:
+        sys.exit(exc.returncode if exc.returncode > 0 else 1)

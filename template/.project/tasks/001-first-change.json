@@ -1,0 +1,12 @@
+{
+  "id": "001-first-change",
+  "state": "planned",
+  "goal": "Replace this example with one concrete, reviewable project change.",
+  "allowed_paths": ["src/**", "tests/**", "docs/**", ".project/tasks/001-first-change.json"],
+  "acceptance_checks": ["./project check", "./project build"],
+  "base_commit": null,
+  "results": [],
+  "unrun_checks": ["./project check", "./project build"],
+  "blockers": [],
+  "next_action": "Set a specific goal and record git rev-parse HEAD before editing; no checks have run for this task."
+}

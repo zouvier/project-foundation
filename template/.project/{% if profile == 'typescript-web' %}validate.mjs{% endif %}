@@ -1,0 +1,101 @@
+import fs from "node:fs";
+import path from "node:path";
+import Ajv from "ajv";
+import ts from "typescript";
+
+// Check declared contracts and static source imports; this is not a sandbox.
+const root = process.cwd();
+const errors = [];
+const ajv = new Ajv({ allErrors: true, strict: true });
+const display = (file) => path.relative(root, file);
+function readJSON(file) {
+  try { return JSON.parse(fs.readFileSync(file, "utf8")); }
+  catch (error) { errors.push(`${display(file)}: ${error.message}`); return undefined; }
+}
+function validate(schemaName, files) {
+  const schema = readJSON(path.join(root, ".project/schemas", schemaName));
+  if (schema === undefined) return;
+  let check;
+  try { check = ajv.compile(schema); }
+  catch (error) { errors.push(`${schemaName}: ${error.message}`); return; }
+  for (const file of files) {
+    const value = readJSON(file);
+    if (value !== undefined && !check(value)) {
+      for (const error of check.errors ?? []) {
+        errors.push(`${display(file)}${error.instancePath}: ${error.message}`);
+      }
+    }
+  }
+}
+validate("project.schema.json", [path.join(root, ".project/project.json")]);
+const tasks = path.join(root, ".project/tasks");
+if (!fs.existsSync(tasks)) errors.push(".project/tasks is missing");
+else validate("task.schema.json", fs.readdirSync(tasks)
+  .filter((name) => name.endsWith(".json")).map((name) => path.join(tasks, name)));
+
+const src = path.join(root, "src");
+const layers = new Set(["domain", "app", "infrastructure"]);
+const allowed = { domain: ["domain"], app: ["app", "domain"], infrastructure: ["infrastructure", "domain"] };
+const config = ts.readConfigFile(path.join(root, "tsconfig.json"), ts.sys.readFile);
+if (config.error) errors.push(`tsconfig.json: ${ts.flattenDiagnosticMessageText(config.error.messageText, " ")}`);
+const options = ts.parseJsonConfigFileContent(config.config ?? {}, ts.sys, root).options;
+function filesIn(dir) {
+  const result = [];
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    const file = path.join(dir, entry.name);
+    if (entry.isDirectory()) result.push(...filesIn(file));
+    else if (entry.isFile()) result.push(file);
+  }
+  return result;
+}
+function checkImport(file, layer, specifier) {
+  const resolved = ts.resolveModuleName(specifier, file, options, ts.sys).resolvedModule;
+  const target = resolved?.resolvedFileName ?? (specifier.startsWith(".")
+    ? path.resolve(path.dirname(file), specifier) : null);
+  const relative = target ? path.relative(src, target) : null;
+  const isSource = relative !== null && relative !== ".." && !relative.startsWith(`..${path.sep}`) && !path.isAbsolute(relative);
+  if (isSource) {
+    const targetLayer = relative.split(path.sep)[0];
+    if (!allowed[layer].includes(targetLayer)) errors.push(`${display(file)}: ${layer} cannot import ${specifier}`);
+  } else if (layer === "domain" || specifier.startsWith(".") || (target && !target.includes(`${path.sep}node_modules${path.sep}`))) {
+    errors.push(`${display(file)}: ${layer} cannot import outside its allowed source layers: ${specifier}`);
+  }
+}
+if (!fs.existsSync(src)) errors.push("src is missing");
+else {
+  for (const entry of fs.readdirSync(src, { withFileTypes: true })) {
+    if (entry.isDirectory() && !layers.has(entry.name)) errors.push(`src/${entry.name}: unknown source layer`);
+    if (entry.isFile() && !["main.tsx", "styles.css"].includes(entry.name)) errors.push(`src/${entry.name}: unknown root source file`);
+  }
+  for (const file of filesIn(src)) {
+    const layer = path.relative(src, file).split(path.sep)[0];
+    if (!layers.has(layer) || !/\.[cm]?[jt]sx?$/.test(file)) continue;
+    const tree = ts.createSourceFile(file, fs.readFileSync(file, "utf8"), ts.ScriptTarget.Latest, true);
+    function visit(node) {
+      let reference;
+      if (ts.isCallExpression(node) && ts.isPropertyAccessExpression(node.expression) &&
+          ["glob", "globEager"].includes(node.expression.name.text) &&
+          ts.isMetaProperty(node.expression.expression)) {
+        errors.push(`${display(file)}: glob module loading is outside the layer policy`);
+      }
+      if (ts.isImportDeclaration(node) || ts.isExportDeclaration(node)) reference = node.moduleSpecifier;
+      if (ts.isImportEqualsDeclaration(node) && ts.isExternalModuleReference(node.moduleReference)) reference = node.moduleReference.expression;
+      if (ts.isImportTypeNode(node)) reference = ts.isLiteralTypeNode(node.argument) ? node.argument.literal : node.argument;
+      if (ts.isCallExpression(node) && (node.expression.kind === ts.SyntaxKind.ImportKeyword ||
+          (ts.isIdentifier(node.expression) && node.expression.text === "require"))) {
+        reference = node.arguments[0];
+        if (!reference) errors.push(`${display(file)}: dynamic imports need a literal module path`);
+      }
+      if (reference) {
+        if (ts.isStringLiteralLike(reference)) checkImport(file, layer, reference.text);
+        else errors.push(`${display(file)}: dynamic imports need a literal module path`);
+      }
+      ts.forEachChild(node, visit);
+    }
+    visit(tree);
+  }
+}
+if (errors.length) {
+  console.error(errors.join("\n"));
+  process.exitCode = 1;
+} else console.log("Schemas and source boundaries passed.");

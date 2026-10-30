@@ -1,0 +1,16 @@
+:root {
+  font-family: system-ui, sans-serif;
+  color: #19252c;
+  background: #f4f6f5;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  line-height: 1.5;
+}
+
+body { margin: 0; }
+main { max-width: 42rem; margin: 12vh auto; padding: 2rem; }
+h1 { font-size: clamp(2rem, 6vw, 3.5rem); line-height: 1.1; }
+.eyebrow { font-size: 0.85rem; letter-spacing: 0.08em; text-transform: uppercase; }
+label { display: block; margin-top: 2rem; font-weight: 600; }
+input { box-sizing: border-box; width: 100%; margin-top: 0.5rem; padding: 0.75rem; font: inherit; border: 1px solid #9da9af; border-radius: 0.4rem; }
+input:focus-visible { outline: 3px solid #267b91; outline-offset: 2px; }

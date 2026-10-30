@@ -1,0 +1,13 @@
+[project]
+name = "project-foundation"
+version = "0.1.2"
+description = "A small, tested Copier foundation for independent projects"
+requires-python = ">=3.11,<3.14"
+dependencies = ["copier==9.19.1", "pytest==9.2.0", "jsonschema==4.26.0"]
+
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
