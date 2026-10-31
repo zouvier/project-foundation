@@ -1,0 +1,16 @@
+[project]
+name = "agent-company"
+version = "0.1.0"
+description = "Local Codex task, review and improvement ledger"
+requires-python = ">=3.9"
+dependencies = []
+
+[project.scripts]
+agent-company = "agent_company.cli:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["agent_company*"]

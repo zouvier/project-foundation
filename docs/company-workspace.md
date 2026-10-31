@@ -1,9 +1,9 @@
-# Future company workspace
+# Coordination handoff
 
-The foundation solves consistent project starts first. A later company workspace is a separate repository/catalog containing project identifiers and paths, task routing, run summaries, budgets and approval state. Each project retains its own source, decisions, task records and secrets. Link to evidence; do not merge unrelated project memories into one prompt.
+The foundation and the preserved [orchestration prototype](../orchestration/README.md) now share this source repository. Copier still generates only `template/`. Each generated project keeps its own repository, decisions, task records and dependencies; orchestration source and durable state are not copied into applications.
 
-Start with one human coordinator directing a builder and reviewer on bounded tasks. The four Markdown roles are interchangeable with any agent client. A scheduler, queue, durable state, observability and sandbox are separate systems; the roles and task schema do not supply them.
+The prototype records manually registered projects, bounded tasks, independent reviews, exact-artifact acceptance and evidence-backed improvement proposals. Offline tests exercise these contracts. One historical real Codex builder/reviewer trial used a fixed arithmetic fixture; it did not use a foundation-generated project or validate general worker containment. Production workers remain disabled.
 
-Evaluate LangGraph if explicit checkpoints, resumable workflows and human interrupts become necessary. Evaluate a company-board tool such as Paperclip separately against actual adapter commands, identity isolation, permission defaults and export requirements. Nothing in v0.1 selects or installs those tools. CrewAI Flows, Microsoft Agent Framework and OpenAI Agents SDK are other later candidates documented in the research memo.
+Custom runtime development is closed. Future coordination is intended to use [Orca](https://github.com/stablyai/orca), which has not been installed or validated here. Automatic pinned generation/registration and the connection between project handoff records and runtime tasks remain unfinished. The [closeout and handoff](../orchestration/docs/integration-plan.md) explains the exact boundary, existing evidence and remaining integration work.
 
-Expand only after observed friction: add a Python research profile for notebook/data work, a monorepo task graph when a real project needs multiple packages, or a catalog UI when the number of independent projects warrants one. None is needed for the initial generation/check/handoff workflow.
+Foundation changes should continue as reviewed commits in this repository with regression tests and immutable releases. Existing projects remain pinned until a human accepts an upgrade. Improvement notes are evidence for a future change, never permission to rewrite active templates, expand worker access or deploy an application.

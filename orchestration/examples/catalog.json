@@ -1,0 +1,13 @@
+{
+  "allowed_project_root": "/absolute/path/to/projects",
+  "projects": {
+    "example": {
+      "path": "/absolute/path/to/projects/example",
+      "foundation_revision": "975e5ffe387cb474f9fbc8ffd38df601cdf1b1de",
+      "checks": {
+        "check": ["./project", "check"],
+        "test": ["./project", "test"]
+      }
+    }
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "id": "fix-example",
+  "project": "example",
+  "goal": "Replace this with a concrete, bounded local code change.",
+  "base_revision": "0000000000000000000000000000000000000000",
+  "allowed_paths": ["src/example.py"],
+  "steps": [{"id": "implement", "instruction": "Make the approved change in the single allowed file."}],
+  "checks": ["check", "test"],
+  "limits": {"worker_seconds": 120, "check_seconds": 60, "max_attempts": 1, "max_tool_steps": 0}
+}

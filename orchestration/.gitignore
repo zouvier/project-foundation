@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+.company/
+.artifacts/
+.venv/
+*.egg-info/
+.DS_Store
+.env
+.env.*
+auth.json
+credentials.json

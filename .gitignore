@@ -3,6 +3,7 @@
 .pytest_cache/
 __pycache__/
 .artifacts/
+.company/
 .fixtures/
 .DS_Store
 *.pyc

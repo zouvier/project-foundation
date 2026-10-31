@@ -2,17 +2,19 @@
 
 A Copier template for independent repositories with a predictable workflow for people and coding agents. Choose one profile: `typescript-web` (Vite, React, TypeScript) or `python-service` (FastAPI, uv, a `src` package). This is a locally tested starting point, not a claim of optimal agent performance.
 
-The three layers stay separate:
+The template and preserved orchestration prototype share this repository. Generated projects stay independent:
 
 ```mermaid
 flowchart LR
   T[Versioned project-foundation template] -->|Copier copy / reviewed update| A[Independent project A]
   T -->|Copier copy / reviewed update| B[Independent project B]
-  C[Future company-workspace catalog] -. tasks and links .-> A
-  C -. tasks and links .-> B
+  C[Experimental orchestration prototype] -. manual catalog and task records .-> A
+  C -. manual catalog and task records .-> B
 ```
 
-Each project owns its source, task records and decisions. The future company workspace can route work and link repositories; it must not become a shared global agent memory. No orchestration runtime, model API, connected MCP service, production deployment or dashboard is installed by this template.
+Each project owns its source, task records and decisions. Copier generates only `template/`; `orchestration/` is never copied into applications. No model API, connected MCP service, production deployment or dashboard is installed by this template.
+
+The [orchestration prototype](orchestration/README.md) preserves a tested local task/review ledger and a bounded Codex fixture trial. Custom runtime development is now closed; future coordination is intended to use [Orca](https://github.com/stablyai/orca). Orca is not installed or validated here. Automatic foundation generation/registration and production worker containment remain unfinished; see the [handoff](orchestration/docs/integration-plan.md).
 
 ## First project
 
@@ -74,7 +76,7 @@ Always update on a clean branch using a pinned release. Review the diff, resolve
 
 `AGENTS.md` is a short map to the project command, architecture and a single task/handoff record. Role prompts are optional, plain Markdown in `.project/roles/`. There is no provider-specific adapter or personal authentication copied into projects. Start with a concrete task and observable acceptance checks, then record actual results and unrun checks in the same JSON task record.
 
-These records organize work, not permissions. Static import rules enforce the documented ordinary module boundaries; they are not a security sandbox. Git worktrees separate working files, not credentials or network access. Separate agent environments and runtime policies belong to a later orchestration design.
+These records organize work, not permissions. Static import rules enforce the documented ordinary module boundaries; they are not a security sandbox. Git worktrees separate working files, not credentials or network access. The preserved orchestration prototype does not establish production worker containment.
 
 ## Maintaining the foundation
 
@@ -92,7 +94,14 @@ To maintain dependency locks, use Copier with an absolute template source to ren
 
 The template has no Copier tasks, migrations, Jinja extensions or `--trust` requirement. Review and release a new immutable tag after changes pass. Do not move existing release tags.
 
-Further design context: [research memo](docs/research.md), [foundation decision](docs/decisions/0001-foundation.md), and [future company workspace](docs/company-workspace.md).
+The preserved prototype has a separate offline suite:
+
+```sh
+cd orchestration
+python3 -B -m unittest discover -s tests -v
+```
+
+No model requests are made by either suite. Further design context: [research memo](docs/research.md), [foundation decision](docs/decisions/0001-foundation.md), and [coordination handoff](docs/company-workspace.md).
 
 ## Public release lineage and license
 

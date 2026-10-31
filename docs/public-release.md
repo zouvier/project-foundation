@@ -1,5 +1,7 @@
 # Public v0.1.2 lineage
 
+The later closeout adds the experimental `orchestration/` source and its offline tests alongside the template. It imports a sanitized file snapshot, without private Git history, state databases, transcripts, credentials or raw run artifacts. Its catalog now declares the existing public release commit; declaration alone is not project-provenance validation. No foundation tag is moved and no template file is changed. See the [coordination handoff](../orchestration/docs/integration-plan.md).
+
 This repository starts a clean public history from the audited local v0.1.2 source baseline `8389dc96e61e840934b6a6a3b427c107494db9a3`. That private baseline commit and its earlier tags are not published Git objects here. The public commit therefore has a different identity; the public `v0.1.2` tag identifies this repository's sanitized release.
 
 Every byte in `copier.yml` and `template/` is preserved from the audited baseline. The sorted relative-path/content SHA-256 is `016aa8fade38b48418b2ab18ff11da931d72aa048782189d91932414c91e2fe2` (for each file, hash UTF-8 relative path, NUL, then bytes; sort paths first).
