@@ -4,6 +4,8 @@ The imported prototype previously passed 169 offline tests. These exercise stric
 
 The public closeout snapshot passed all 169 tests again on macOS arm64, including a run on Python 3.13.5 matching the CI configuration (52.588 seconds, no failures or skips). This verification made zero live model requests.
 
+A subsequent clean-runner reproduction found that one review-plan test depended on a locally installed Codex binary. The test now supplies its own non-executed fixture identifier, and a separate regression checks that an absent CLI still blocks without launching anything. All **170 tests passed** in 50.922 seconds with Codex discovery explicitly unavailable. Production execution controls are unchanged.
+
 The full foundation suite passed 340 tests in 406.87 seconds, with no skips. Its two new combined-layout cases cover both generated profiles, manual catalog registration, task assignment/tracking, an independent simulated reviewer, genuine fixed-byte check receipts and exact-artifact acceptance. They exercise no model and execute no generated application code. Other foundation cases separately run the real project command and upgrade matrix.
 
 Run this component's complete offline suite from `orchestration/`:

@@ -70,13 +70,30 @@ class ReviewOptionsTests(unittest.TestCase):
 
     def test_review_plan_command_never_starts_a_process(self):
         output = io.StringIO()
-        with patch("agent_company.codex._capture") as capture, patch("agent_company.codex.subprocess.Popen") as popen, contextlib.redirect_stdout(output):
+        # Argument propagation must not depend on a Codex installation on the
+        # developer's machine or CI runner. This path never executes the fixture.
+        with patch("agent_company.codex.shutil.which", return_value="/fixture/codex"), \
+                patch("agent_company.codex._capture") as capture, \
+                patch("agent_company.codex.subprocess.Popen") as popen, contextlib.redirect_stdout(output):
             code = main(["review-plan", "--workspace", str(self.workspace)])
         self.assertEqual(code, 0)
         plan = json.loads(output.getvalue())
         self.assertFalse(plan["executable"])
         self.assertIn("daybreak=true", plan["argv"])
         self.assertEqual(plan["model"], "gpt-5.6-sol")
+        capture.assert_not_called()
+        popen.assert_not_called()
+
+    def test_review_plan_without_cli_stays_blocked_without_launch(self):
+        output = io.StringIO()
+        with patch("agent_company.codex.shutil.which", return_value=None), \
+                patch("agent_company.codex._capture") as capture, \
+                patch("agent_company.codex.subprocess.Popen") as popen, contextlib.redirect_stdout(output):
+            code = main(["review-plan", "--workspace", str(self.workspace)])
+        self.assertEqual(code, 2)
+        result = json.loads(output.getvalue())
+        self.assertEqual(result["status"], "blocked")
+        self.assertIn("Codex CLI is not installed", result["reason"])
         capture.assert_not_called()
         popen.assert_not_called()
 
