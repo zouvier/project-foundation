@@ -1,4 +1,4 @@
-# Project foundation v0.1.2
+# Project foundation v0.1.3
 
 A Copier template for independent repositories with a predictable workflow for people and coding agents. Choose one profile: `typescript-web` (Vite, React, TypeScript) or `python-service` (FastAPI, uv, a `src` package). This is a locally tested starting point, not a claim of optimal agent performance.
 
@@ -26,12 +26,12 @@ Clone the public template, then generate from the local checkout:
 git clone https://github.com/zouvier/project-foundation.git
 cd project-foundation
 UV_CACHE_DIR="$PWD/.cache/uv" uv sync --locked --python 3.13.5
-.venv/bin/copier copy --defaults --vcs-ref=v0.1.2 \
+.venv/bin/copier copy --defaults --vcs-ref=v0.1.3 \
   --data project_name=my-web --data profile=typescript-web "$PWD" ../my-web
 cd ../my-web
 git init
 git add .
-git commit -m "Start from project-foundation v0.1.2"
+git commit -m "Start from project-foundation v0.1.3"
 ./project doctor
 ./project bootstrap
 ./project check
@@ -44,7 +44,7 @@ The first `doctor` returns nonzero because dependencies have not been installed.
 To record the public GitHub URL directly as the project's future update source, use this alternative after installing Copier in the foundation environment:
 
 ```sh
-.venv/bin/copier copy --defaults --vcs-ref=v0.1.2 \
+.venv/bin/copier copy --defaults --vcs-ref=v0.1.3 \
   --data project_name=my-service --data profile=python-service \
   https://github.com/zouvier/project-foundation.git ../my-service
 ```

@@ -95,7 +95,7 @@ def test_real_copier_receipt_matches_exact_source_and_is_read_only(identity_proj
     assert receipt["source_path"] == answers["_src_path"] == str(template_repo)
     assert receipt["source_ref"] == answers["_commit"] == "v0.1.0"
     assert receipt["source_commit"] == git(template_repo, "rev-parse", "v0.1.0")
-    assert receipt["foundation_version"] == "0.1.2"
+    assert receipt["foundation_version"] == "0.1.3"
     assert inspect(project) == receipt["runtime"]
     assert tree_bytes(project) == before
 
@@ -258,7 +258,7 @@ def test_application_version_evolves_independently_of_foundation(project_copy, p
         path.write_text(path.read_text().replace('name = "identity-service"\nversion = "0.1.0"',
                                                 'name = "identity-service"\nversion = "7.8.9"', 1))
     assert inspect(project)
-    assert read_json(project / ".project/template.json")["foundation_version"] == "0.1.2"
+    assert read_json(project / ".project/template.json")["foundation_version"] == "0.1.3"
 
 
 @pytest.mark.parametrize("profile", PROFILES)

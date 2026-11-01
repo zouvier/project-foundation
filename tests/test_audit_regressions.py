@@ -298,7 +298,7 @@ def test_real_release_project_upgrades_to_current_candidate(tmp_path, projects, 
     assert user_source.read_bytes() == user_bytes
     metadata = json.loads((project / ".project/project.json").read_text())
     receipt = json.loads((project / ".project/template.json").read_text())
-    assert metadata["foundation_version"] == receipt["foundation_version"] == "0.1.2"
+    assert metadata["foundation_version"] == receipt["foundation_version"] == "0.1.3"
     assert yaml.safe_load((project / ".copier-answers.yml").read_text())["_commit"] == "audit-candidate"
     evidence.run([project / "project", "bootstrap"], cwd=project, timeout=300)
     evidence.run([project / "project", "check"], cwd=project)
@@ -307,6 +307,6 @@ def test_real_release_project_upgrades_to_current_candidate(tmp_path, projects, 
     assert git(project, "status", "--porcelain") == ""
     (evidence.root / f"release-upgrade-{old_tag}-{profile}.json").write_text(json.dumps({
         "profile": profile, "old_tag": old_tag, "old_commit": release_commit,
-        "candidate_fixture_commit": candidate_commit, "candidate_version": "0.1.2",
+        "candidate_fixture_commit": candidate_commit, "candidate_version": "0.1.3",
         "preserved_source": str(user_source), "commands": ["bootstrap", "check", "build"],
     }, indent=2) + "\n")
