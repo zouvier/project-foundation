@@ -1,6 +1,6 @@
 # Closeout and Orca handoff
 
-The foundation and the preserved custom orchestration prototype live in the same public repository. Custom runtime development is closed. Future coordination is intended to use [Orca](https://github.com/stablyai/orca); no Orca installation, configuration, compatibility test or migration has been performed in this project.
+The foundation and the preserved custom orchestration prototype live in the same public repository. Custom runtime development is closed. Future coordination is intended to use [Orca](https://github.com/stablyai/orca); the closeout did not perform an Orca installation, configuration, compatibility test or migration. The later [bounded source-repository workflow](../../docs/orca-workflow.md) documents Codex maintenance in Orca without reopening this runtime or claiming production containment.
 
 ## Repository boundary
 

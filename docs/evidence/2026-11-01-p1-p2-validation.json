@@ -1,0 +1,62 @@
+{
+  "record_type": "documentation_validation",
+  "date_utc": "2026-11-01",
+  "scope": "P1 reporting/readiness guide and P2 source-only overseer proposal ledger, plus sanitized M1 acceptance evidence",
+  "tasks": {
+    "P1": "task_b6fe58b22b5d",
+    "P1_builder": "task_a469a1652af9",
+    "P2": "task_7ecda025c24e",
+    "P3": "task_a86163b1846b"
+  },
+  "files_sha256": {
+    "docs/orca-workflow.md": "507197ad2c7e31b009c4f43056ca6bb5aa274c9721ddfc694ff1186fe5ad59e1",
+    "docs/improvement-proposals.md": "b53918dafffdf19316e4cc618364e27ad55e9921f7deb5396f7211f0722d8ef1",
+    "docs/evidence/2026-11-01-m1-acceptance.json": "cdd5b65f41afd978e33e52519a3049b8fb605763d9fa2044a249d5e92487a890"
+  },
+  "checks": [
+    {
+      "command": "git diff --check",
+      "exit_code": 0
+    },
+    {
+      "command": "git diff --no-index --check /dev/null <each untracked deliverable>",
+      "exit_code": 1,
+      "interpretation": "Expected file differences; no stdout/stderr whitespace diagnostics for workflow guide, plan, ledger and acceptance JSON."
+    },
+    {
+      "check": "Python standard-library relative Markdown target and heading-anchor resolution across all seven changed Markdown files",
+      "passed": true,
+      "resolved_targets": 21
+    },
+    {
+      "command": "python3 -m json.tool docs/evidence/2026-11-01-m1-acceptance.json",
+      "exit_code": 0
+    },
+    {
+      "check": "Acceptance record identifies exactly six accepted M1 files and patch820189203d3613386e92314ac42348a58640c19ef18e613b5040c7a2476a750d; five non-workflow hashes still match",
+      "passed": true
+    },
+    {
+      "check": "New portable acceptance/ledger records contain no machine home paths or private email addresses",
+      "passed": true
+    },
+    {
+      "check": "P1 builder inspected installed Orca orchestration skill and terminal-send, task-update and send help without trial reports",
+      "passed": true
+    }
+  ],
+  "test_scope": "No full fixture suite rerun for this documentation-only cycle. The accepted M1 record separately preserves historical 22 contract and 340 full-suite passes; those are not new P1/P2 executions.",
+  "overseer": {
+    "mode": "codex -a on-request -s read-only -c approvals_reviewer=user",
+    "effective_status": "Read Only (Ask for approval)",
+    "attribution": "Distinct independent Codex overseer, permitted final terminal report captured by coordinator",
+    "proposal": "P2-001: Link historical verification status to its accepted disposition",
+    "human_disposition": "proposed, not accepted or implemented",
+    "inspection_limits": "No suites rerun, private transcripts copied, schema defect established or template changes proposed for automatic application."
+  },
+  "limits": [
+    "Validation is a sanitized summary of direct checks and explicitly attributed builder/overseer observations; raw private transcripts are excluded.",
+    "Independent final artifact review and human acceptance of P1/P2 are separate from this validation record.",
+    "P3 stays blocked; release, push, merge and adoption are not authorized."
+  ]
+}

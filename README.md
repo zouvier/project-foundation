@@ -14,7 +14,7 @@ flowchart LR
 
 Each project owns its source, task records and decisions. Copier generates only `template/`; `orchestration/` is never copied into applications. No model API, connected MCP service, production deployment or dashboard is installed by this template.
 
-The [orchestration prototype](orchestration/README.md) preserves a tested local task/review ledger and a bounded Codex fixture trial. Custom runtime development is now closed; future coordination is intended to use [Orca](https://github.com/stablyai/orca). Orca is not installed or validated here. Automatic foundation generation/registration and production worker containment remain unfinished; see the [handoff](orchestration/docs/integration-plan.md).
+The [orchestration prototype](orchestration/README.md) preserves a tested local task/review ledger and a bounded Codex fixture trial. Custom runtime development is now closed; future coordination is intended to use [Orca](https://github.com/stablyai/orca). This source repository supports a [bounded Codex builder and independent reviewer workflow in Orca](docs/orca-workflow.md). That procedure does not establish general machine adoption or production worker containment. Automatic foundation generation/registration remains unfinished; see the [handoff](orchestration/docs/integration-plan.md).
 
 ## First project
 
